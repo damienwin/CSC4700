@@ -82,12 +82,14 @@ class BPE_algorithm():
         for iteration in range(k):
             pair_count = defaultdict(int)
 
+            # Count every pair, adding to frequency
             for i in range(len(split_chars) - 1):
                 pair_count[(split_chars[i], split_chars[i + 1])] += 1
 
             if not pair_count:
                 break
 
+            # Find the highest frequency tokens and add to vocabualry
             highest_freq = max(pair_count, key=pair_count.get)
             frequency = pair_count[highest_freq]
             new_token = ''.join(highest_freq)
@@ -126,15 +128,19 @@ class BPE_algorithm():
         left = 0
         while left < len(text):
             match = None
+
             # Find longest token in given text
             for right in range(len(text), left, -1):
                 sub = text[left:right]
                 if sub in self.vocabulary:
                     match = sub
                     break
+
+            # Handle unknown tokens
             if match is None:
                 tokens.append("<UNK>")
                 left += 1
+
             else:
                 tokens.append(match)
                 left += len(match)
@@ -192,6 +198,7 @@ def main():
             print("Word not in vocabulary")
             return
 
+        # Handle unigram model
         if model.n == 1:
             current_word = tuple(args.word.split())
             output_text = list(current_word)
@@ -203,6 +210,7 @@ def main():
 
             print("Generated text:", " ".join(output_text))
 
+        #Handle bigram model
         elif model.n == 2:
             current_word = tuple(args.word.split())
             output_text = list(current_word)
