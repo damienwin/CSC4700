@@ -1,0 +1,30 @@
+Questions 1. Train a unigram model on the provided corpus. Using the trained model, what is the output of :
+a. python LastName_hnrs3035_cshw1.py predict_ngram --word whale --nwords 100 -- load PathToUnigramModel.p
+Generated text: whale in mid winter just after her tides and grub , for the visual nerve ? ” “ because he was in the ropes and goes through your thumb - maker ’ s skin wallet with both hollowly laughed him with a queer sort of him , with intertwistings of vishnu in his perfidious allies was stove the smaller whales that it , the row ! starbuck , i have precisely means of this reasoning on deck . wherefore he is indiscriminately designated by a century , now gained his undeviating exactitude , or still directing the men , the filling
+
+
+b. python LastName_hnrs3035_cshw1.py predict_ngram --word whale --nwords 100 -- load PathToUnigramModel.p --d
+Generated text: whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale
+
+
+c. python LastName_hnrs3035_cshw1.py predict_ngram --word tomato --nwords 100 - -load PathToUnigramModel.p?
+Word not in vocabulary
+
+
+
+2. Train a bigram model on the provided corpus. Using the trained model, what is the output of : a. python LastName_hnrs3035_cshw1.py predict_ngram --word the harpooneer -- nwords 100 --load PathToBigramModel.p --d?
+Generated text: the harpooneer is a thing not to be the first time behold father mapple , so that the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the whale , and the
+
+3. Train a BPE tokenizer using the default value for k. What is the output of: a. python LastName_hnrs3035_cshw1.p tokenize –text The bright red tomato was eaten by the whale! --load PathToBPEModel.py
+Tokens: ['The ', 'b', 'ri', 'ght ', 're', 'd ', 'to', 'mat', 'o ', 'was ', 'ea', 'te', 'n ', 'by ', 'the ', 'whale']
+Token IDs: [155, 208, 478, 303, 476, 235, 525, 397, 413, 562, 249, 512, 405, 219, 518, 566]
+
+
+
+
+4. Train a BPE tokenizer using k=3000. What is the output of: a. python LastName_hnrs3035_cshw1.p tokenize –text The bright red tomato was eaten by the whale! --load PathToBPEModel.py
+Tokens: ['The ', 'bri', 'ght ', 'red ', 'tom', 'at', 'o ', 'was ', 'ea', 'ten ', 'by the ', 'whale']
+Token IDs: [766, 990, 1532, 2470, 2794, 887, 2166, 2969, 1224, 2728, 1008, 2988]
+
+
+
