@@ -8,6 +8,9 @@ from collections import Counter
 def default_dict():
     return defaultdict(int)
 
+"""
+Class with a vocabulary and its' probabilities for each, and trains on input n gram model
+"""
 class NGramModel():
     def __init__(self, n: int):
         if n == 1 or n == 2:
