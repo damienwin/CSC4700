@@ -1,14 +1,19 @@
 import re
 import random
+import pickle
+import argparse
 from collections import defaultdict
 from collections import Counter
+
+def default_dict():
+    return defaultdict(int)
 
 class NGramModel():
     def __init__(self, n:int):
         if n == 1 or n == 2:
             self.n = n
         self.vocabulary = set()
-        self.probabilities = defaultdict(lambda: defaultdict(int))
+        self.probabilities = defaultdict(default_dict)
         self.occurrences = defaultdict(int)
 
     """
@@ -17,7 +22,6 @@ class NGramModel():
     def train(self, passage: str):
         # Split full words or non-whitespace non-word characters
         split_words = re.findall(r"\w+|[^\w\s]", passage.lower())
-        print(split_words)
         self.vocabulary = set(split_words)
 
         # Track previous token(s) of every token
@@ -40,7 +44,6 @@ class NGramModel():
         if word in self.vocabulary:
             word_choices = []
             maxprob = max(self.probabilities[(word,)].values())
-            print(f"MAXPROB: {maxprob}")
             for possible_word in self.probabilities[(word,)]:
                 if self.probabilities[(word,)][possible_word] == maxprob:
                     word_choices.append(possible_word)
@@ -59,17 +62,33 @@ class NGramModel():
     Predict next word based on is_deterministic() output
     """
     def predict_next_token(self, word, deterministic=False):
-        deterministic, word_choices = self.is_deterministic(word)
+        if word not in self.vocabulary:
+            return "<UNK>"  # Handle unknown words
+        word_choices = list(self.probabilities[(word,)].keys())
+        probabilities = list(self.probabilities[(word,)].values())
+
         if deterministic:
-            return word_choices[0]
+            return max(self.probabilities[(word,)], key=self.probabilities[(word,)].get)  # Most probable word
         else:
-            return random.choices(word_choices)
+            return random.choices(word_choices, weights=probabilities, k=1)[0]
+
+    def save(self, filepath):
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(filepath):
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)
 
 class BPE_algorithm():
     def __init__(self, model:NGramModel):
         self.vocabulary = set()
         self.vocab_to_index = defaultdict()
 
+    """
+    Develop vocabulary for a string, starting with individual chars and pairing the most frequent token(s) k times
+    """
     def train(self, corpus:str, k=500):
         split_chars = list(corpus)
         self.vocabulary = set(corpus)
@@ -99,36 +118,104 @@ class BPE_algorithm():
             split_chars = merged_tokens
         return split_chars
 
-
+    """
+    Create a map for every token to its ID
+    """
     def token_to_id(self):
         self.vocabulary.add("<UNK>")
         self.vocab_to_index = {word: idx + 1 for idx, word in enumerate(sorted(self.vocabulary))}
         self.vocab_to_index["<UNK>"] = 0
         return
 
+    """
+    Convert split string into its' IDs
+    """
     def tokenize(self, split_chars):
         tokenized_corpus = [self.vocab_to_index.get(token, 0) for token in split_chars]
         return tokenized_corpus
 
-passage = "Hello, world! This is a test. Hello again!"
-print(passage)
-print(set(passage))
-Model = NGramModel(1)
-Model.train(passage)
-print(Model.vocabulary)
-print(dict(Model.probabilities))
-word = "hello"
-print(Model.probabilities[(word,)].items())
-print(Model.is_deterministic(word))
-print(Model.predict_next_token(word))
+    @staticmethod
+    def load(filepath):
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)
 
-bpe_model = BPE_algorithm(Model)
-tokenized_words = bpe_model.train(passage)
-print(tokenized_words)
-print(bpe_model.vocabulary)
-bpe_model.token_to_id()
-print(bpe_model.tokenize(tokenized_words))
-print(bpe_model.vocab_to_index)
+    def save(self, filepath):
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
+
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('activity', choices=['train_ngram', 'predict_ngram', 'train_bpe', 'tokenize'])
+    parser.add_argument('--data', type=str)
+    parser.add_argument('--save', type=str)
+    parser.add_argument('--load', type=str)
+    parser.add_argument('--word', type=str)
+    parser.add_argument('--nwords', type=int)
+    parser.add_argument('--text', type=str)
+    parser.add_argument('--n', type=int, choices=[1, 2])
+    parser.add_argument('--d', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.activity == 'train_ngram':
+        if not args.data or not args.save or args.n is None:
+            print("Please specify the data path and save path")
+            return
+
+        with open(args.data, 'r', encoding='utf-8') as f:
+            data_arg = f.read()
+        model = NGramModel(n=args.n)
+        model.train(data_arg)
+        model.save(args.save)
+        print(f"{args.n}-gram model trained and saved at {args.save}.")
+
+    elif args.activity == 'predict_ngram':
+        if not args.load or not args.word or args.nwords is None:
+            print("Please specify the number of words and load path")
+            return
+
+        model = NGramModel.load(args.load)
+        current_word = args.word
+        output_text = current_word
+
+        for _ in range(args.nwords):
+            next_word = model.predict_next_token(current_word, deterministic=args.d)
+            output_text += " " + next_word
+            current_word = next_word
+
+        print("Generated text:", output_text)
+
+    elif args.activity == 'train_bpe':
+        if not args.data or not args.save or not args.n:
+            print("Please specify the data path and save path")
+            return
+
+        with open(args.data, 'r', encoding='utf-8') as f:
+            data_arg = f.read()
+        bpe_model = BPE_algorithm(NGramModel(n=args.n))
+        bpe_model.train(data_arg)
+        bpe_model.save(args.save)
+        print(f"BPE model trained and saved at {args.save}.")
+
+    elif args.activity == 'tokenize':
+        if not args.load or not args.text:
+            print("Please specify the load path and text to tokenize")
+            return
+
+        bpe_model = BPE_algorithm.load(args.load)
+        tokens = bpe_model.tokenize(args.text)
+        print("Tokens:", tokens)
+        bpe_model.token_to_id()
+        print("Token IDs:", bpe_model.vocab_to_index)
+
+    else:
+        raise ValueError('Unknown activity')
+
+if __name__ == "__main__":
+    main()
+
 
 
 
